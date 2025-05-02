@@ -5,15 +5,23 @@ class CacheManager:
     """Class to instantiate different cache types."""
 
     def __init__(self):
-
         self.cache_type = get_env("CCAT_CACHE_TYPE")
-        
+
         if self.cache_type == "in_memory":
             from cat.cache.in_memory_cache import InMemoryCache
+
             self.cache = InMemoryCache()
         elif self.cache_type == "file_system":
             cache_dir = get_env("CCAT_CACHE_DIR")
             from cat.cache.file_system_cache import FileSystemCache
+
             self.cache = FileSystemCache(cache_dir)
+        elif self.cache_type == "redis":
+            redis_host = get_env("CCAT_REDIS_HOST")
+            redis_port = get_env("CCAT_REDIS_PORT")
+            redis_db = get_env("CCAT_REDIS_DB")
+            from cat.cache.redis_cache import RedisCache
+
+            self.cache = RedisCache(redis_host, redis_port, redis_db)
         else:
             raise ValueError(f"Cache type {self.cache_type} not supported")
