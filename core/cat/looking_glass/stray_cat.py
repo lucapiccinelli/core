@@ -66,7 +66,7 @@ class StrayCat:
         # user data
         self.__user_id = user_data.name # TODOV2: use id
         self.__user_data = user_data
-        
+
         # get working memory from cache or create a new one
         self.load_working_memory_from_cache()
 
@@ -118,23 +118,43 @@ class StrayCat:
         )
 
         return why
-    
+
+
+    def _get_cache_key(self):
+        return f"{self.user_id}_working_memory"
+
+    def wipe_conversation_history(self):
+        """Clear the conversation history. Also updates the cache"""
+
+        self.cache.delete(self._get_cache_key())
+        self.working_memory = WorkingMemory()
+
+    def synch_conversation_history(self):
+        if self.cache.keep_in_synch:
+            print("syncing hostory")
+            print(f"history is {[m.text for m in self.working_memory.history]}")
+            self.load_working_memory_from_cache()
+
     def load_working_memory_from_cache(self):
         """Load the working memory from the cache."""
-        
+
         self.working_memory = \
-            self.cache.get_value(f"{self.user_id}_working_memory") or WorkingMemory()
+            self.cache.get_value(self._get_cache_key()) or WorkingMemory()
+
+        print(f"loaded history is {[m.text for m in self.working_memory.history]}")
 
     def update_working_memory_cache(self):
         """Update the working memory in the cache."""
 
-        updated_cache_item = CacheItem(f"{self.user_id}_working_memory", self.working_memory, -1)
+        updated_cache_item = CacheItem(self._get_cache_key(), self.working_memory, -1)
         self.cache.insert(updated_cache_item)
+
+        print(f"saved history is {[m.text for m in self.working_memory.history]}")
 
     def send_ws_message(self, content: str | dict, msg_type: MSG_TYPES = "notification"):
         """Send a message via websocket.
 
-        This method is useful for sending a message via websocket directly without passing through the LLM.  
+        This method is useful for sending a message via websocket directly without passing through the LLM.
         In case there is no connection the message is skipped and a warning is logged.
 
         Parameters
@@ -151,7 +171,7 @@ class StrayCat:
 
         Send a chat message via websocket
         >>> cat.send_ws_message("Meooow!", msg_type="chat")
-        
+
         Send an error message via websocket
         >>> cat.send_ws_message("Something went wrong", msg_type="error")
 
@@ -174,7 +194,7 @@ class StrayCat:
             self.__send_ws_json({"type": msg_type, "content": content})
 
     def send_chat_message(self, message: str | CatMessage, save=False):
-        """Sends a chat message to the user using the active WebSocket connection.  
+        """Sends a chat message to the user using the active WebSocket connection.
         In case there is no connection the message is skipped and a warning is logged
 
         Parameters
@@ -206,7 +226,7 @@ class StrayCat:
         self.__send_ws_json(message.model_dump())
 
     def send_notification(self, content: str):
-        """Sends a notification message to the user using the active WebSocket connection.  
+        """Sends a notification message to the user using the active WebSocket connection.
         In case there is no connection the message is skipped and a warning is logged
 
         Parameters
@@ -263,7 +283,7 @@ class StrayCat:
         Parameters
         ----------
         query : str, optional
-            The query used to make a similarity search in the Cat's vector memories.  
+            The query used to make a similarity search in the Cat's vector memories.
             If not provided, the query will be derived from the last user's message.
 
         Examples
@@ -437,7 +457,7 @@ class StrayCat:
     def __call__(self, message_dict):
         """Run the conversation turn.
 
-        This method is called on the user's message received from the client.  
+        This method is called on the user's message received from the client.
         It is the main pipeline of the Cat, it is called automatically.
 
         Parameters
@@ -500,7 +520,7 @@ class StrayCat:
                 "name": "VectorMemoryError",
                 "description": err_message,
             }
-        
+
         # reply with agent
         try:
             agent_output: AgentOutput = self.main_agent.execute(self)
@@ -553,6 +573,8 @@ class StrayCat:
 
     def run(self, user_message_json, return_message=False):
         try:
+            self.synch_conversation_history()
+
             # run main flow
             cat_message = self.__call__(user_message_json)
             # save working memory to cache
@@ -640,7 +662,7 @@ Allowed classes are:
     def langchainfy_chat_history(self, latest_n: int = 20) -> List[BaseMessage]:
         """Redirects to WorkingMemory.langchainfy_chat_history. Will be removed from this class in v2."""
         return self.working_memory.langchainfy_chat_history(latest_n)
-    
+
     def stringify_chat_history(self, latest_n: int = 20) -> str:
         """Redirects to WorkingMemory.stringify_chat_history. Will be removed from this class in v2."""
         return self.working_memory.stringify_chat_history(latest_n)
@@ -666,14 +688,14 @@ Allowed classes are:
     @property
     def user_id(self) -> str:
         """The user's id.
-        
+
         Returns
         -------
         user_id : str
             Current user's id.
         """
         return self.__user_id
-    
+
     @property
     def user_data(self) -> AuthUserInfo:
         """`AuthUserInfo` object containing user data.
@@ -684,7 +706,7 @@ Allowed classes are:
             Current user's data.
         """
         return self.__user_data
-    
+
     @property
     def _llm(self):
         """Instance of langchain `LLM`.
@@ -789,7 +811,7 @@ Allowed classes are:
         ... cat.white_rabbit.schedule_job(ring_alarm_api, seconds=30)
         """
         return CheshireCat().white_rabbit
-    
+
     @property
     def cache(self):
         """Gives access to internal cache."""

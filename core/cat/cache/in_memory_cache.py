@@ -16,6 +16,10 @@ class InMemoryCache(BaseCache):
         self.items = {}
         self.max_items = 100
 
+    @property
+    def keep_in_synch(self) -> bool:
+        return False
+
     def insert(self, cache_item):
         """Insert a key-value pair in the cache.
 
@@ -28,7 +32,7 @@ class InMemoryCache(BaseCache):
 
         # add new item
         self.items[cache_item.key] = cache_item
-        
+
         # clean up cache if it's full
         if len(self.items) >= self.max_items:
 

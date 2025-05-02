@@ -18,7 +18,7 @@ async def wipe_conversation_history(
 ) -> Dict:
     """Delete the specified user's conversation history from working memory"""
 
-    cat.working_memory.history = []
+    cat.wipe_conversation_history()
 
     return {
         "deleted": True,
@@ -32,6 +32,8 @@ async def get_conversation_history(
     cat: StrayCat = check_permissions(AuthResource.MEMORY, AuthPermission.READ),
 ) -> Dict:
     """Get the specified user's conversation history from working memory"""
+
+    print(f"getting history {[m.text for m in cat.working_memory.history]}")
 
     return {"history": cat.working_memory.history}
 
