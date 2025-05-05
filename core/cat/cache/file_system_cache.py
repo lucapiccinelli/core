@@ -21,10 +21,6 @@ class FileSystemCache(BaseCache):
     def _get_file_path(self, key):
         return os.path.join(self.cache_dir, f"{key}.cache")
 
-    @property
-    def keep_in_synch(self) -> bool:
-        return False
-
     def insert(self, cache_item):
         """Insert a key-value pair in the cache.
 

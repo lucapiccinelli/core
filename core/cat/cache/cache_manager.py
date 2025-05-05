@@ -16,12 +16,5 @@ class CacheManager:
             from cat.cache.file_system_cache import FileSystemCache
 
             self.cache = FileSystemCache(cache_dir)
-        elif self.cache_type == "redis":
-            redis_host = get_env("CCAT_REDIS_HOST")
-            redis_port = get_env("CCAT_REDIS_PORT")
-            redis_db = get_env("CCAT_REDIS_DB")
-            from cat.cache.redis_cache import RedisCache
-
-            self.cache = RedisCache(redis_host, redis_port, redis_db)
         else:
             raise ValueError(f"Cache type {self.cache_type} not supported")

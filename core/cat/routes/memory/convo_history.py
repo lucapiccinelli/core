@@ -18,7 +18,8 @@ async def wipe_conversation_history(
 ) -> Dict:
     """Delete the specified user's conversation history from working memory"""
 
-    cat.wipe_conversation_history()
+    # cat.wipe_conversation_history()
+    cat.working_memory.history = []
 
     return {
         "deleted": True,

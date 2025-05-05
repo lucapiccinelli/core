@@ -9,10 +9,6 @@ class RedisCache(BaseCache):
     def __init__(self, host="localhost", port=6379, db=0):
         self._redis = redis.Redis(host=host, port=port, db=db)
 
-    @property
-    def keep_in_synch(self) -> bool:
-        return True
-
     def insert(self, cache_item: CacheItem):
         encoded_item = pickle.dumps(cache_item)
         self._redis.set(

@@ -29,7 +29,7 @@ class ConnectionAuth(ABC):
             self,
             resource: AuthResource,
             permission: AuthPermission):
-        
+
         self.resource = resource
         self.permission = permission
 
@@ -55,12 +55,14 @@ class ConnectionAuth(ABC):
             if user:
                 # create new StrayCat
                 cat = StrayCat(user)
-                
+
                 # StrayCat is passed to the endpoint
                 yield cat
 
                 # save working memory and delete StrayCat after endpoint execution
+                print("i'm here 1")
                 cat.update_working_memory_cache()
+                print("i'm here 2")
                 del cat
                 return
 
@@ -74,7 +76,7 @@ class ConnectionAuth(ABC):
     @abstractmethod
     def not_allowed(self, connection: Request | WebSocket):
         pass
-        
+
 
 class HTTPAuth(ConnectionAuth):
 
@@ -99,7 +101,7 @@ class HTTPAuth(ConnectionAuth):
                     "Deprecation Warning: `access_token` header will not be supported in v2."
                     "Pass your token/key using the `Authorization: Bearer <token>` format."
                 )
-        
+
         # some clients may send an empty string instead of just not setting the header
         if token == "":
             token = None
@@ -109,9 +111,9 @@ class HTTPAuth(ConnectionAuth):
 
     def not_allowed(self, connection: Request):
         raise HTTPException(status_code=403, detail={"error": "Invalid Credentials"})
-    
 
-    
+
+
 
 class WebSocketAuth(ConnectionAuth):
 
@@ -125,7 +127,7 @@ class WebSocketAuth(ConnectionAuth):
         # TODOAUTH: is there a more secure way to pass the token over websocket?
         #   Headers do not work from the browser
         token = connection.query_params.get("token", None)
-        
+
         return user_id, token
 
     def not_allowed(self, connection: WebSocket):
@@ -147,7 +149,7 @@ class CoreFrontendAuth(HTTPAuth):
             self.not_allowed(connection)
 
         return "user", token
-    
+
     def not_allowed(self, connection: Request):
         referer_query = urlencode({"referer": connection.url.path})
         raise HTTPException(

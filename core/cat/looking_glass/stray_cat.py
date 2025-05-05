@@ -127,13 +127,7 @@ class StrayCat:
         """Clear the conversation history. Also updates the cache"""
 
         self.cache.delete(self._get_cache_key())
-        self.working_memory = WorkingMemory()
-
-    def synch_conversation_history(self):
-        if self.cache.keep_in_synch:
-            print("syncing hostory")
-            print(f"history is {[m.text for m in self.working_memory.history]}")
-            self.load_working_memory_from_cache()
+        self.working_memory.history = []
 
     def load_working_memory_from_cache(self):
         """Load the working memory from the cache."""
@@ -573,8 +567,6 @@ class StrayCat:
 
     def run(self, user_message_json, return_message=False):
         try:
-            self.synch_conversation_history()
-
             # run main flow
             cat_message = self.__call__(user_message_json)
             # save working memory to cache

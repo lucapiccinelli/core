@@ -4,22 +4,62 @@ services:
   cheshire-cat-core:
     build:
       context: ./core
-    container_name: cheshire_cat_core
     # Uncomment the two lines below to use your .env (see .env.example)
     # env_file:
     #   - .env
     ports:
-      - ${CCAT_CORE_PORT:-1865}:80
-      - 5678:5678 # only for development purposes (take away in production)
+      - ${CCAT_CORE_PORT:-1865-1866}:80
+      - 5678-5679:5678 # only for development purposes (take away in production)
     extra_hosts:
       - "host.docker.internal:host-gateway" # This add an entry to /etc/hosts file in the container mapping host.docker.internal to the host machine IP addr, allowing the container to access services running on the host, not only on Win and Mac but also Linux. See https://docs.docker.com/desktop/networking/#i-want-to-connect-from-a-container-to-a-service-on-the-host and https://docs.docker.com/reference/cli/docker/container/run/#add-host
     environment:
       # Timezone
       - TZ=${CCAT_TIMEZONE:-UTC}
+      - CCAT_REDIS_HOST=redis
+      - CCAT_REDIS_PORT=6379
+      - CCAT_CACHE_TYPE=in_memory
+      - QDRANT_HOST=${QDRANT_HOST:-qdrant}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - CCAT_CACHE_DIR=tmp
     volumes:
       - ./core:/app
+      - v-data:/app/cat/data
     command:
       - python
       - "-m"
       - "cat.main"
     restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  redis:
+    image: cgm-g3-pharmacy.docker.artifactory.cgm.ag/redis
+    expose:
+      - 6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 30s
+      retries: 50
+      start_period: 30s
+    restart: always
+
+  qdrant:
+    image: cgm-g3-pharmacy.docker.artifactory.cgm.ag/qdrant:v1.13.4
+    ulimits:
+      nofile:
+        soft: 10000
+        hard: 10000
+    expose:
+      - 6333
+    ports:
+      - 16343:6333
+      - 16344:6334
+    restart: unless-stopped
+    volumes:
+      - v-qdrant:/qdrant/storage
+
+volumes:
+  v-qdrant:
+  v-data:
+
